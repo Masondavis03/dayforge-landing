@@ -313,6 +313,21 @@
     50% { opacity: 0.4; }
   }
 
+  .form-message {
+    margin-top: 16px;
+    font-size: 0.95rem;
+    display: none;
+  }
+  .form-message.success { display: block; color: #34d399; }
+  .form-message.error { display: block; color: #f87171; }
+  .form-message.duplicate { display: block; color: var(--accent-light); }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
   @media (max-width: 600px) {
     nav { padding: 16px 20px; }
     .hero { padding: 100px 20px 60px; }
@@ -367,18 +382,95 @@
   </div>
 </section>
 
-<section class="email-section">
+<section class="email-section" id="waitlist">
   <h2>Be the first to know.</h2>
   <p class="sub">Get early access when DayForge launches.</p>
-  <div class="email-form">
-    <input type="email" placeholder="your@email.com">
-    <button class="btn-primary">Notify Me</button>
+  <div class="email-form" id="waitlist-form">
+    <input type="email" id="email-input" placeholder="your@email.com" required>
+    <button class="btn-primary" id="submit-btn">Notify Me</button>
   </div>
+  <div class="form-message" id="form-message"></div>
 </section>
 
 <footer>
   &copy; 2026 DayForge. Built with intention.
 </footer>
+
+<script>
+(function() {
+  var SUPABASE_URL = 'https://wkycsdqejmhswlpzxmez.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndreWNzZHFlam1oc3dscHp4bWV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzgyODIsImV4cCI6MjA4NTY1NDI4Mn0.U_tGuyjmN0j8DBxvCImi8owQPy1b8M4r4RGFo58pmwY';
+
+  var emailInput = document.getElementById('email-input');
+  var submitBtn = document.getElementById('submit-btn');
+  var formMessage = document.getElementById('form-message');
+  var waitlistForm = document.getElementById('waitlist-form');
+
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function showMessage(text, type) {
+    formMessage.textContent = text;
+    formMessage.className = 'form-message ' + type;
+  }
+
+  async function submitEmail() {
+    var email = emailInput.value.trim().toLowerCase();
+
+    if (!email || !isValidEmail(email)) {
+      showMessage('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+      var res = await fetch(SUPABASE_URL + '/rest/v1/waitlist', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ email: email })
+      });
+
+      if (res.status === 201) {
+        waitlistForm.style.display = 'none';
+        showMessage("You're on the list! We'll be in touch.", 'success');
+      } else if (res.status === 409) {
+        showMessage("You're already on the list!", 'duplicate');
+      } else {
+        showMessage('Something went wrong. Please try again.', 'error');
+      }
+    } catch (err) {
+      showMessage('Network error. Please try again.', 'error');
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Notify Me';
+  }
+
+  submitBtn.addEventListener('click', submitEmail);
+  emailInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submitEmail();
+  });
+
+  // Scroll-to-waitlist for hero and nav CTA buttons
+  document.querySelector('.nav-cta').addEventListener('click', function() {
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+  });
+  document.querySelector('.hero .btn-primary').addEventListener('click', function() {
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+  });
+  document.querySelector('.hero .btn-secondary').addEventListener('click', function() {
+    document.querySelector('.features').scrollIntoView({ behavior: 'smooth' });
+  });
+})();
+</script>
 
 </body>
 </html>
