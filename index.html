@@ -793,32 +793,43 @@ function toggleAccordion(btn){
 // ===== INTERACTIVE DEMO =====
 const demos=[
   {events:[{slot:'slot9',cls:'indigo',time:'9:00 – 9:30 AM',title:'Team Standup',h:42,delay:400}],
-   voice:'<strong>DayForge:</strong> Done. Team Standup scheduled for 9 AM. No conflicts detected.'},
+   voice:'Done. Team Standup scheduled for 9 AM. No conflicts detected.'},
   {events:[{slot:'slot10',cls:'green',time:'10:00 AM – 12:00 PM',title:'Deep Work Block',h:100,delay:400}],
-   voice:'<strong>DayForge:</strong> Blocked 10 AM – 12 PM for deep work. Notifications will be silenced.'},
+   voice:'Blocked 10 AM – 12 PM for deep work. Notifications will be silenced.'},
   {events:[
     {slot:'slot1',cls:'amber',time:'1:00 PM',title:'Sprint Review Due',h:36,delay:300},
     {slot:'slot2',cls:'rose',time:'2:00 PM',title:'Design Mockups Due',h:36,delay:600},
     {slot:'slot3',cls:'sky',time:'3:00 PM',title:'Client Presentation',h:36,delay:900}],
-   voice:'<strong>DayForge:</strong> Found 3 deadlines in your project brief. Added to calendar.'},
+   voice:'Found 3 deadlines in your project brief. Added to calendar.'},
   {events:[
     {slot:'slot1',cls:'green',time:'1:00 – 2:30 PM',title:'Deep Work (moved)',h:72,delay:300},
     {slot:'slot3',cls:'indigo',time:'3:00 – 3:30 PM',title:'Team Sync (moved)',h:42,delay:600}],
-   voice:'<strong>DayForge:</strong> Afternoon rescheduled. Moved deep work to 1 PM and team sync to 3 PM.'}
+   voice:'Afternoon rescheduled. Moved deep work to 1 PM and team sync to 3 PM.'}
 ];
 
+let demoTimers=[];
 function runDemo(idx){
+  demoTimers.forEach(t=>clearTimeout(t));
+  demoTimers=[];
   document.querySelectorAll('.demo-cmd').forEach((b,i)=>b.classList.toggle('active',i===idx));
   document.querySelectorAll('.demo-event').forEach(e=>e.remove());
-  document.getElementById('voiceText').innerHTML='<strong>DayForge:</strong> Processing...';
+  const voiceEl=document.getElementById('voiceText');
+  voiceEl.textContent='';
+  const proc=document.createElement('strong');proc.textContent='DayForge:';
+  voiceEl.appendChild(proc);voiceEl.append(' Processing...');
   demos[idx].events.forEach(ev=>{
     const slot=document.getElementById(ev.slot);if(!slot)return;
     const div=document.createElement('div');
     div.className=`demo-event ${ev.cls}`;div.style.height=ev.h+'px';div.style.top='0';
-    div.innerHTML=`<div class="ev-time">${ev.time}</div>${ev.title}`;
-    slot.appendChild(div);setTimeout(()=>div.classList.add('visible'),ev.delay);
+    const timeDiv=document.createElement('div');timeDiv.className='ev-time';timeDiv.textContent=ev.time;
+    div.appendChild(timeDiv);div.append(ev.title);
+    slot.appendChild(div);demoTimers.push(setTimeout(()=>div.classList.add('visible'),ev.delay));
   });
-  setTimeout(()=>{document.getElementById('voiceText').innerHTML=demos[idx].voice;},600);
+  demoTimers.push(setTimeout(()=>{
+    voiceEl.textContent='';
+    const s=document.createElement('strong');s.textContent='DayForge:';
+    voiceEl.appendChild(s);voiceEl.append(' '+demos[idx].voice);
+  },600));
 }
 setTimeout(()=>runDemo(0),800);
 
