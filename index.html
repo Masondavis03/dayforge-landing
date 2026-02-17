@@ -889,6 +889,9 @@ function showError(msg){
   document.getElementById('formWrapper').appendChild(div);
   setTimeout(()=>div.remove(),4000);
 }
+
+// Kill old service worker from previous app deployment
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
 </script>
 </body>
 </html>
